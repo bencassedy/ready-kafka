@@ -9,7 +9,7 @@ import org.apache.kafka.common.serialization.{StringSerializer, StringDeserializ
   * Kafka Producer Class
   */
 class ReadyKafkaProducer {
-  case class KafkaProducerConfigs(brokerList: String = "0.0.0.0:9092") {
+  case class KafkaProducerConfigs(brokerList: String = "localhost:9092") {
     val properties = new Properties()
     properties.put("bootstrap.servers", brokerList)
     properties.put("key.serializer", classOf[StringSerializer])

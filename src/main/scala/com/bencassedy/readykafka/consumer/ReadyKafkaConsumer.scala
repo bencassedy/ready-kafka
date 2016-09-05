@@ -19,6 +19,7 @@ class ReadyKafkaConsumer(topics: List[String], groupId: String, brokerList: Stri
   consumerProperties.put("value.serializer", classOf[StringSerializer])
   consumerProperties.put("key.deserializer", classOf[StringDeserializer])
   consumerProperties.put("value.deserializer", classOf[StringDeserializer])
+
   class ReadyKafkaConsumerRunnable(_topics: util.List[String], val id: Int) extends Runnable {
     val consumer = new KafkaConsumer[String, String](consumerProperties)
 
@@ -26,7 +27,7 @@ class ReadyKafkaConsumer(topics: List[String], groupId: String, brokerList: Stri
       consumer.subscribe(_topics)
       try {
         while (true) {
-          val crs: ConsumerRecords[String, String] = consumer.poll(1000)
+          val crs: ConsumerRecords[String, String] = consumer.poll(100)
 //          crs.forEach { case cr: ConsumerRecord[String, String] =>
 //            // TODO: pass in function here that does something with the consumer record
 //            println(cr)
