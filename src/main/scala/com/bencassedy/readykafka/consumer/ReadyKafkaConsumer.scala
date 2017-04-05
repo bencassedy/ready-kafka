@@ -9,6 +9,10 @@ import scala.collection.JavaConverters._
 
 import org.apache.kafka.clients.consumer.{ConsumerRecord, ConsumerRecords, KafkaConsumer}
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success}
+
 /**
   * The high-level and per-thread implementations of a Kafka consumer group
   */
@@ -25,40 +29,22 @@ class ReadyKafkaConsumer[A](
   consumerProperties.put("key.deserializer", classOf[StringDeserializer])
   consumerProperties.put("value.deserializer", classOf[StringDeserializer])
 
-  class ReadyKafkaConsumerRunnable(_topics: util.List[String], val id: Int) extends Runnable {
-    val consumer = new KafkaConsumer[String, String](consumerProperties)
-
-    override def run(): Unit = {
-      consumer.subscribe(_topics)
-      try {
+  def consume(): Unit = {
+    val numConsumers = 2
+    0 until numConsumers foreach { n =>
+      val f = Future {
+        val consumer = new KafkaConsumer[String, String](consumerProperties)
+        consumer.subscribe(topics.asJava)
         while (true) {
           val crs: ConsumerRecords[String, String] = consumer.poll(1000)
           crs.iterator().asScala.foreach(r => msgFunc(r))
         }
       }
-      finally {
-        consumer.close()
+
+      f onComplete {
+        case Success(_) => println("success! consumer future shutting down")
+        case Failure(e) => println(s"failure! bah! exception: $e")
       }
     }
-
-    def shutdown(): Unit = {
-      consumer.wakeup()
-    }
-  }
-
-
-  def consume(): Unit = {
-    val numConsumers = 2
-    val pool = Executors.newFixedThreadPool(numConsumers)
-    val consumers = 0 until numConsumers map { n =>
-      new ReadyKafkaConsumerRunnable(topics.asJava, n)
-    }
-    consumers.foreach(pool.submit(_))
-    Runtime.getRuntime.addShutdownHook(new Thread() {
-      override def run(): Unit = {
-        consumers.foreach(_.shutdown())
-        pool.shutdown()
-      }
-    })
   }
 }
