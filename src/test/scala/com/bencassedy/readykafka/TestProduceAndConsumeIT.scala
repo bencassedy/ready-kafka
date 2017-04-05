@@ -18,7 +18,7 @@ class TestProduceAndConsumeIT extends FunSuite {
 
   test("can produce and consume records from Kafka") {
     producer.produce(topic, records)
-    consumer.consume()
+    consumer.cs()
 
     Thread.sleep(2000)  // need to tell scalatest to wait a few seconds
   }
